@@ -33,6 +33,7 @@ python ../../src/filtrado30.py
 
 2.2. Extraer resultados con datos crudos
 python ../../src/temporaleraw.py
+Este fichero genera también la visualización de las series temporales.
 
 2.2. Extraer resultados con datos temporales
 python ../../src/temporales.py

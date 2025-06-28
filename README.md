@@ -4,30 +4,11 @@ Guía de Uso
 
 
 📂 Estructura Final del Proyecto
-text
-TFM-Deteccion-Bots/
-│
-├── cresci17/       # Dataset principal (descargar externamente)
-│   ├── social_spambots_1
-│   ├── genuine_accounts
-│   ├── ...
-│
-├── src/
-│   ├── tfmglobal.py             # Debe ejecutarse desde raíz
-│   ├── filtrado30.py            # Se ejecuta desde resultados/global/
-│   ├── temporalesraw.py         # Se ejecuta desde resultados/global/
-│   ├── temporales.py            # Se ejecuta desde resultados/global/
-│   └── temporalestexto.py       # Se ejecuta desde resultados/global/
-│
-├── resultados/                  # Carpeta generada automáticamente
-│   └── global/                  # Creada por tfmglobal.py
-│       ├── interacciones_por_tweet_global_texto.csv    # Output de tfmglobal.py
-│       ├── interacciones_mayores_30_texto.csv         # Output de filtrado30.py
-│       └── ...                  # Otros archivos generados
-│
-├── README.md
 
-Guía Paso a Paso 
+![image](https://github.com/user-attachments/assets/abb2703c-36b3-4f22-afae-d13896ce1f0b)
+
+
+Guía Paso a Paso
 0. Descarga del Dataset
 Descargar FakeInteractionDataset desde https://uma365-my.sharepoint.com/:f:/g/personal/fjbaldan_uma_es/EpOHI1BfAPZOv4mJ96M6CxIBwdzL4j2nohXDJXuiqEPORQ?e=bEIgTr.
 

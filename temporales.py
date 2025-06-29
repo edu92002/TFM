@@ -1,7 +1,7 @@
 import pandas as pd
 from tsfeatures import tsfeatures
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.model_selection import  cross_validate
+from sklearn.model_selection import  cross_val_predict, cross_validate
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 import ast
@@ -10,32 +10,54 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier, export_text,plot_tree
 from sklearn.model_selection import cross_validate
 import matplotlib.pyplot as plt
+from sklearn.ensemble import HistGradientBoostingRegressor
+
+
+def visinter(model,X,y,conteo_interacciones):
+    # 1. Obtener predicciones para todo el conjunto de datos
+    y_pred = cross_val_predict(model, X, y, cv=5, method='predict_proba')[:, 1]  # Probabilidades de clase positiva
+
+    # 2. Calcular el número de interacciones por instancia (ajusta según tu estructura)
+    # Asumiendo que cada fila en X contiene una serie temporal:
+
+    print(X)
+    print(conteo_interacciones)
+    # 3. Crear el gráfico
+    plt.figure(figsize=(12, 6))
+    # Gráfico de dispersión con colores según clase real
+    scatter = plt.scatter(conteo_interacciones.iloc[:,1], y_pred, c=y, cmap='coolwarm', alpha=0.6, 
+                        edgecolors='w', linewidth=0.5)
+
+    # Línea de decisión (umbral 0.5)
+    plt.axhline(0.5, color='gray', linestyle='--', alpha=0.7)
+
+    # Personalización
+    plt.colorbar(scatter, label='Clase Real (0=Humano, 1=Bot)')
+    plt.xlabel('Número total de interacciones')
+    plt.ylabel('Probabilidad predicha de ser bot')
+    plt.title('Relación entre Interacciones y Clasificación\n(Todos los folds de CV)')
+
+    plt.legend()
+    plt.grid(alpha=0.3)
+    plt.tight_layout()
+    plt.show()
 
 def imputar(X):
-    from sklearn.ensemble import HistGradientBoostingRegressor
-
-    # Para cada columna con entre 1 y 20 NaNs
     for col in X.columns:
         n_missing = X[col].isna().mean() * 100  # Multiplica por 100 para obtener porcentaje
         if 0 < n_missing <= 10:
-            # Separar datos completos y faltantes
             datos_completos = X.dropna(subset=[col])
             datos_faltantes = X[X[col].isna()]
-            
             # Evitar columnas con todos los valores iguales o sin variabilidad
             if datos_completos[col].nunique() <= 1:
                 continue
-            
             # Preparar features (descartar la columna objetivo)
             X_train = datos_completos.drop(columns=[col])
             y_train = datos_completos[col]
             X_pred  = datos_faltantes.drop(columns=[col])
-
             # Asegurarse de que no hay NaNs en los features de entrenamiento/predicción
             if X_train.isna().any().any() or X_pred.isna().any().any():
                 continue  # saltar columnas donde los features tienen NaNs
-
-            # Entrenar modelo e imputar
             modelo = HistGradientBoostingRegressor()
             modelo.fit(X_train, y_train)
             X.loc[X[col].isna(), col] = modelo.predict(X_pred)
@@ -44,7 +66,7 @@ def imputar(X):
 
 def main():
     # 1. Cargar y preparar datos
-    df = pd.read_csv("interacciones_mayores_30_texto.csv",encoding='latin1')
+    df = pd.read_csv("interacciones_mayores_30_confake.csv",encoding='latin1')
     df['fechas_interacciones'] = df['fechas_interacciones'].apply(ast.literal_eval)
     df = df.explode('fechas_interacciones')
     df['fechas_interacciones'] = pd.to_datetime(df['fechas_interacciones'])
@@ -100,6 +122,7 @@ def main():
 
     complete_df = pd.concat(complete_series)
     print(complete_df)
+    conteo_interacciones = complete_df.groupby('unique_id')['y'].sum().reset_index()
     # 5. Calcular características por día
     features_df = tsfeatures(
         complete_df,
@@ -187,7 +210,7 @@ def main():
     else:
         print("No hay datos válidos para entrenar")
 
-
+    visinter(model,X,y,conteo_interacciones) #c4.5
 
 
 if __name__ == "__main__":

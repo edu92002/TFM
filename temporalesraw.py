@@ -10,7 +10,72 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier, export_text,plot_tree
 from sklearn.model_selection import cross_validate
 import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.model_selection import cross_val_predict
 
+
+def visbarras(plot_data):
+    # Seleccionar 1 bot y 1 humano aleatorios
+    sample_bot = plot_data[plot_data['is_bot'] == 1]['unique_id'].sample(1).values[0]
+    sample_human = plot_data[plot_data['is_bot'] == 0]['unique_id'].sample(1).values[0]
+    # --- Gráfico del BOT ---
+    plt.figure(figsize=(15, 5))
+    bot_data = plot_data[plot_data['unique_id'] == sample_bot]
+    print(bot_data)
+    plt.bar(bot_data['t'],bot_data['y'], color='red', alpha=0.7, width=0.8)
+    
+    plt.title(f'Patrón de Actividad Temporal: Bot (ID: {sample_bot})', fontsize=14)
+    plt.xlabel('Unidad temporal', fontsize=12)
+    plt.ylabel('Número de Interacciones', fontsize=12)
+    plt.xticks(range(0, 336),fontsize=5)
+    plt.grid(True, linestyle='--', alpha=0.3)
+    plt.xlim(-0.5,100)
+    plt.tight_layout()
+    plt.show()
+    
+    # --- Gráfico del HUMANO ---
+    plt.figure(figsize=(15, 5))
+    human_data = plot_data[plot_data['unique_id'] == sample_human]
+    plt.bar(human_data['t'],human_data['y'], color='blue', alpha=0.7, width=0.8)
+    
+    plt.title(f'Patrón de Actividad Temporal: Humano (ID: {sample_human})', fontsize=14)
+    plt.xlabel('Unidad temporal', fontsize=12)
+    plt.ylabel('Número de Interacciones', fontsize=12)
+    plt.xticks(range(0,336),fontsize=5)
+    plt.xlim(-0.5,100)
+    plt.grid(True, linestyle='--', alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+def visinter(model,X,y):
+    # 1. Obtener predicciones para todo el conjunto de datos
+    y_pred = cross_val_predict(model, X, y, cv=5, method='predict_proba')[:, 1]  # Probabilidades de clase positiva
+
+    # 2. Calcular el número de interacciones por instancia (ajusta según tu estructura)
+    # Asumiendo que cada fila en X contiene una serie temporal:
+    print(X)
+    num_interacciones = X.sum(axis=1)  # Suma a lo largo del eje temporal
+    print(num_interacciones)
+    # 3. Crear el gráfico
+    plt.figure(figsize=(12, 6))
+
+    # Gráfico de dispersión con colores según clase real
+    scatter = plt.scatter(num_interacciones, y_pred, c=y, cmap='coolwarm', alpha=0.6, 
+                        edgecolors='w', linewidth=0.5)
+
+    # Línea de decisión (umbral 0.5)
+    plt.axhline(0.5, color='gray', linestyle='--', alpha=0.7)
+
+    # Personalización
+    plt.colorbar(scatter, label='Clase Real (0=Humano, 1=Bot)')
+    plt.xlabel('Número total de interacciones')
+    plt.ylabel('Probabilidad predicha de ser bot')
+    plt.title('Relación entre Interacciones y Clasificación\n(Todos los folds de CV)')
+
+    plt.legend()
+    plt.grid(alpha=0.3)
+    plt.tight_layout()
+    plt.show()
 
 def main():
     # 1. Cargar y preparar datos
@@ -34,7 +99,6 @@ def main():
         .rename(columns={'original_tweet_id': 'unique_id'})
     )
     grouped['y'] = grouped['y'].astype(float)
-
     # 4. Crear series temporales de dos semanas mínimas
     complete_series = []
     for uid, group in grouped.groupby('unique_id'):
@@ -112,12 +176,12 @@ def main():
                 print(f"\n=== Evaluación de {name} ===")
                 results = cross_validate(model, X, y, cv=5, scoring=scoring)
 
-                y_pred = cross_val_predict(model, X, y, cv=5)
+                # y_pred = cross_val_predict(model, X, y, cv=5)
 
-                # Matriz de confusión
-                cm = confusion_matrix(y, y_pred)
-                print("Matriz de confusión:")
-                print(cm)
+                # # Matriz de confusión
+                # cm = confusion_matrix(y, y_pred)
+                # print("Matriz de confusión:")
+                # print(cm)
                 
                 print(f"Accuracy : {results['test_accuracy'].mean():.2f} ± {results['test_accuracy'].std():.2f}")
                 print(f"Precision: {results['test_precision'].mean():.2f} ± {results['test_precision'].std():.2f}")
@@ -150,53 +214,15 @@ def main():
         print("No hay datos válidos para entrenar")
 # --- Código para visualización de series en dos gráficos ---
 
-
-
+    visinter(model,X,y) #c4.5
     if len(X) > 0:
         # Preparar datos para plotting
         plot_data = complete_df.merge(
             final_df[['unique_id', 'is_bot']],
             on='unique_id'
         )
-        
-        # Seleccionar 1 bot y 1 humano aleatorios
-        sample_bot = plot_data[plot_data['is_bot'] == 1]['unique_id'].sample(1).values[0]
-        sample_human = plot_data[plot_data['is_bot'] == 0]['unique_id'].sample(1).values[0]
-        print(sample_bot)
-        print(sample_human)
-        
-        # Función para formatear horas
-        def format_hour(hour):
-            return f"{hour:02d}:00"
-        
-        # --- Gráfico del BOT ---
-        plt.figure(figsize=(15, 5))
-        bot_data = plot_data[plot_data['unique_id'] == sample_bot]
-        print(bot_data)
-        plt.bar(bot_data['t'],bot_data['y'], color='red', alpha=0.7, width=0.8)
-        
-        plt.title(f'Patrón de Actividad Temporal: Bot (ID: {sample_bot})', fontsize=14)
-        plt.xlabel('Unidad temporal', fontsize=12)
-        plt.ylabel('Número de Interacciones', fontsize=12)
-        plt.xticks(range(0, 336),fontsize=5)
-        plt.grid(True, linestyle='--', alpha=0.3)
-        plt.xlim(-0.5,100)
-        plt.tight_layout()
-        plt.show()
-        
-        # --- Gráfico del HUMANO ---
-        plt.figure(figsize=(15, 5))
-        human_data = plot_data[plot_data['unique_id'] == sample_human]
-        plt.bar(human_data['t'],human_data['y'], color='blue', alpha=0.7, width=0.8)
-        
-        plt.title(f'Patrón de Actividad Temporal: Humano (ID: {sample_human})', fontsize=14)
-        plt.xlabel('Unidad temporal', fontsize=12)
-        plt.ylabel('Número de Interacciones', fontsize=12)
-        plt.xticks(range(0,336),fontsize=5)
-        plt.xlim(-0.5,100)
-        plt.grid(True, linestyle='--', alpha=0.3)
-        plt.tight_layout()
-        plt.show()
+        visbarras(plot_data)
+
 if __name__ == "__main__":
     main()
 

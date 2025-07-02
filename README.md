@@ -10,7 +10,7 @@ Guía de Uso
 
 Guía Paso a Paso
 # 0. Descarga del Dataset
-Descargar FakeInteractionDataset desde https://uma365-my.sharepoint.com/:f:/g/personal/fjbaldan_uma_es/EpOHI1BfAPZOv4mJ96M6CxIBwdzL4j2nohXDJXuiqEPORQ?e=bEIgTr.
+Descargar FakeInteractionDataset desde (http://mib.projects.iit.cnr.it/dataset.html)
 
 Colocar la carpeta en la raíz del proyecto.
 
